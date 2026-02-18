@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AegisCore — Security Testing for Startups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07080b; --surface:#0e1016; --surface2:#141720; --border:#1e2330;
+  --accent:#00e87a; --accent-dim:rgba(0,232,122,0.12); --accent-glow:rgba(0,232,122,0.25);
+  --blue:#38b6ff; --blue-dim:rgba(56,182,255,0.1);
+  --red:#ff4757; --orange:#ff8c42; --yellow:#ffd166;
+  --text:#e8ecf0; --muted:#6b7589;
+  --mono:'IBM Plex Mono',monospace; --display:'Barlow Condensed',sans-serif; --body:'Barlow',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--body);font-size:16px;line-height:1.6;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,232,122,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,232,122,0.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 5%;height:64px;background:rgba(7,8,11,0.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text);text-decoration:none}
+.nav-logo span{color:var(--accent)}
+.nav-links{display:flex;align-items:center;gap:28px;list-style:none}
+.nav-links a{font-family:var(--mono);font-size:11px;color:var(--muted);text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:color 0.2s}
+.nav-links a:hover{color:var(--accent)}
+.nav-cta{color:var(--bg)!important;background:var(--accent);padding:8px 18px;border-radius:2px}
+.nav-mobile-toggle{display:none;cursor:pointer;color:var(--text);font-size:22px;background:none;border:none}
+
+/* HERO */
+#hero{position:relative;min-height:100vh;display:flex;align-items:center;padding:120px 5% 80px;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none}
+.orb-1{width:500px;height:500px;background:radial-gradient(circle,rgba(0,232,122,0.06) 0%,transparent 70%);top:-100px;right:-100px}
+.orb-2{width:400px;height:400px;background:radial-gradient(circle,rgba(56,182,255,0.04) 0%,transparent 70%);bottom:0;left:-100px}
+.hero-inner{position:relative;z-index:1;max-width:600px}
+.hero-tag{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);border:1px solid rgba(0,232,122,0.3);padding:6px 14px;border-radius:2px;margin-bottom:28px;animation:fadeUp 0.6s ease both}
+.hero-tag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);animation:pulse 2s ease infinite}
+h1{font-family:var(--display);font-size:clamp(52px,8vw,96px);font-weight:800;line-height:0.95;letter-spacing:-1px;text-transform:uppercase;color:var(--text);margin-bottom:24px;animation:fadeUp 0.6s 0.1s ease both}
+h1 em{font-style:normal;color:var(--accent);display:block}
+.hero-sub{font-size:18px;font-weight:300;color:var(--muted);max-width:520px;line-height:1.7;margin-bottom:40px;animation:fadeUp 0.6s 0.2s ease both}
+.hero-sub strong{color:var(--text);font-weight:500}
+.hero-actions{display:flex;gap:16px;flex-wrap:wrap;animation:fadeUp 0.6s 0.3s ease both}
+.btn-primary{display:inline-flex;align-items:center;gap:10px;background:var(--accent);color:var(--bg);font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:16px 32px;border-radius:2px;text-decoration:none;transition:all 0.2s;border:2px solid var(--accent)}
+.btn-primary:hover{background:transparent;color:var(--accent);box-shadow:0 0 24px var(--accent-glow)}
+.btn-secondary{display:inline-flex;align-items:center;background:transparent;color:var(--text);font-family:var(--mono);font-size:13px;letter-spacing:1px;padding:16px 28px;border-radius:2px;text-decoration:none;border:1px solid var(--border);transition:all 0.2s}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent)}
+.hero-stats{display:flex;gap:48px;margin-top:64px;padding-top:48px;border-top:1px solid var(--border);flex-wrap:wrap;animation:fadeUp 0.6s 0.4s ease both}
+.stat-item{display:flex;flex-direction:column;gap:4px}
+.stat-num{font-family:var(--display);font-size:40px;font-weight:800;color:var(--accent);line-height:1}
+.stat-label{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+
+/* TERMINAL */
+.hero-terminal{position:absolute;right:5%;top:50%;transform:translateY(-50%);width:min(420px,42%);background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;animation:fadeUp 0.8s 0.5s ease both;box-shadow:0 20px 60px rgba(0,0,0,0.5)}
+.terminal-bar{background:var(--surface2);padding:10px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border)}
+.t-dot{width:10px;height:10px;border-radius:50%}
+.t-dot:nth-child(1){background:#ff5f56}.t-dot:nth-child(2){background:#ffbd2e}.t-dot:nth-child(3){background:#27c93f}
+.terminal-title{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:8px}
+.terminal-body{padding:20px;font-family:var(--mono);font-size:12px;line-height:1.8;min-height:280px}
+.t-line{display:flex;gap:8px}
+.t-prompt{color:var(--accent)}.t-cmd{color:var(--text)}
+.t-output{color:var(--muted);padding-left:16px}.t-warn{color:var(--orange);padding-left:16px}
+.t-crit{color:var(--red);padding-left:16px}.t-ok{color:var(--accent);padding-left:16px}
+.t-cursor{display:inline-block;width:8px;height:14px;background:var(--accent);animation:blink 1s step-end infinite;vertical-align:middle}
+
+/* SHARED */
+section{position:relative;z-index:1}
+.section-inner{max-width:1100px;margin:0 auto;padding:100px 5%}
+.section-tag{font-family:var(--mono);font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:16px;display:flex;align-items:center;gap:12px}
+.section-tag::before{content:'';width:24px;height:1px;background:var(--accent)}
+h2{font-family:var(--display);font-size:clamp(36px,5vw,60px);font-weight:800;text-transform:uppercase;line-height:1;letter-spacing:-0.5px;margin-bottom:16px}
+h2 span{color:var(--accent)}
+.section-desc{font-size:17px;color:var(--muted);max-width:560px;font-weight:300;line-height:1.7;margin-bottom:60px}
+
+/* PROBLEM */
+#problem{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.problem-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);margin-top:48px}
+.problem-card{background:var(--surface);padding:36px 32px;transition:background 0.2s}
+.problem-card:hover{background:var(--surface2)}
+.problem-icon{font-size:28px;margin-bottom:16px}
+.prob-tag{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--red);background:rgba(255,71,87,0.1);padding:3px 8px;border-radius:2px;margin-bottom:12px}
+.problem-card h3{font-family:var(--display);font-size:22px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;color:var(--text)}
+.problem-card p{font-size:14px;color:var(--muted);line-height:1.7}
+
+/* SERVICES */
+.services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+.service-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:36px 32px;transition:all 0.25s;position:relative;overflow:hidden}
+.service-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--border);transition:background 0.25s}
+.service-card:hover{border-color:rgba(0,232,122,0.3);transform:translateY(-4px);box-shadow:0 20px 40px rgba(0,0,0,0.4)}
+.service-card:hover::before,.service-card.featured::before{background:var(--accent)}
+.service-card.featured{border-color:rgba(0,232,122,0.4)}
+.service-badge{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);padding:4px 10px;border-radius:2px;margin-bottom:20px}
+.service-card h3{font-family:var(--display);font-size:28px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.price{font-family:var(--display);font-size:48px;font-weight:800;color:var(--accent);line-height:1;margin-bottom:4px}
+.price-sub{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:28px}
+.service-divider{height:1px;background:var(--border);margin-bottom:24px}
+.feature-list{list-style:none;display:flex;flex-direction:column;gap:12px;margin-bottom:32px}
+.feature-list li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--muted);line-height:1.5}
+.feature-list li::before{content:'\2192';color:var(--accent);font-family:var(--mono);flex-shrink:0;margin-top:1px}
+.btn-service{display:block;text-align:center;padding:14px 24px;font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-decoration:none;border-radius:2px;transition:all 0.2s}
+.btn-service-outline{border:1px solid var(--border);color:var(--text)}
+.btn-service-outline:hover{border-color:var(--accent);color:var(--accent)}
+.btn-service-filled{background:var(--accent);color:var(--bg);border:1px solid var(--accent)}
+.btn-service-filled:hover{background:transparent;color:var(--accent)}
+
+/* HOW IT WORKS */
+#how{background:var(--surface);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.steps-grid{display:grid;grid-template-columns:repeat(4,1fr)}
+.step-item{padding:40px 32px;border-right:1px solid var(--border)}
+.step-item:last-child{border-right:none}
+.step-num{font-family:var(--display);font-size:72px;font-weight:800;color:var(--border);line-height:1;margin-bottom:16px;transition:color 0.3s}
+.step-item:hover .step-num{color:rgba(0,232,122,0.15)}
+.step-item h3{font-family:var(--display);font-size:20px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.step-item p{font-size:14px;color:var(--muted);line-height:1.7}
+.step-accent{display:inline-block;font-family:var(--mono);font-size:10px;color:var(--accent);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+
+/* ── CALCULATOR ── */
+#calculator{background:var(--bg)}
+.calc-shell{display:grid;grid-template-columns:1fr auto 1fr;background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.calc-inputs{padding:40px;display:flex;flex-direction:column;gap:32px}
+.calc-divider{width:1px;background:var(--border)}
+.calc-output{padding:40px;display:flex;flex-direction:column;background:rgba(0,0,0,0.15)}
+.calc-group{display:flex;flex-direction:column;gap:14px}
+.calc-label{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted)}
+.calc-label-row{display:flex;align-items:center;justify-content:space-between}
+.calc-val-badge{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(0,232,122,0.2);padding:3px 10px;border-radius:2px}
+.calc-tabs{display:flex;gap:8px;flex-wrap:wrap}
+.calc-tab{font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:8px 14px;border-radius:2px;cursor:pointer;transition:all 0.2s}
+.calc-tab:hover{border-color:var(--accent);color:var(--text)}
+.calc-tab.active{background:var(--accent-dim);border-color:rgba(0,232,122,0.4);color:var(--accent)}
+
+/* Slider — clean approach, no fake track */
+.calc-slider-wrap{display:flex;flex-direction:column;gap:10px}
+.calc-slider{
+  -webkit-appearance:none;appearance:none;
+  width:100%;height:6px;border-radius:3px;
+  outline:none;cursor:pointer;border:none;
+  background:var(--border); /* fallback, updated by JS */
+}
+.calc-slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:20px;height:20px;border-radius:50%;
+  background:var(--accent);border:3px solid var(--bg);
+  box-shadow:0 0 10px var(--accent-glow);cursor:pointer;
+  transition:box-shadow 0.2s;
+}
+.calc-slider::-webkit-slider-thumb:hover{box-shadow:0 0 16px var(--accent-glow)}
+.calc-slider::-moz-range-thumb{
+  width:20px;height:20px;border-radius:50%;
+  background:var(--accent);border:3px solid var(--bg);
+  box-shadow:0 0 10px var(--accent-glow);cursor:pointer;
+}
+.calc-slider::-moz-range-track{height:6px;background:var(--border);border-radius:3px}
+.calc-slider-labels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--muted)}
+
+.calc-checks{display:flex;flex-direction:column;gap:12px}
+.calc-check-item{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted);cursor:pointer;transition:color 0.2s;user-select:none}
+.calc-check-item:hover{color:var(--text)}
+.calc-check-item input[type="checkbox"]{display:none}
+.calc-checkmark{width:18px;height:18px;border:1px solid var(--border);border-radius:2px;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.calc-check-item input[type="checkbox"]:checked ~ .calc-checkmark{background:var(--accent-dim);border-color:rgba(0,232,122,0.5)}
+.calc-check-item input[type="checkbox"]:checked ~ .calc-checkmark::after{content:'\2713';font-family:var(--mono);font-size:11px;color:var(--accent)}
+.calc-check-item input[type="checkbox"]:checked ~ span:last-child{color:var(--text)}
+
+.calc-out-label{font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.calc-big-number{font-family:var(--display);font-size:clamp(36px,4vw,56px);font-weight:800;color:var(--red);line-height:1;margin-bottom:28px;min-height:58px;transition:color 0.4s}
+.calc-out-divider{width:100%;height:1px;background:var(--border);margin-bottom:24px}
+.calc-roi-row{display:flex;align-items:center;gap:16px;width:100%;margin-bottom:24px}
+.calc-roi-item{display:flex;flex-direction:column;gap:6px;flex:1}
+.calc-roi-label{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.calc-roi-cost{font-family:var(--display);font-size:24px;font-weight:800;color:var(--accent)}
+.calc-roi-danger .calc-roi-cost{color:var(--red)}
+.calc-roi-vs{font-family:var(--mono);font-size:11px;color:var(--muted);flex-shrink:0;background:var(--surface2);border:1px solid var(--border);padding:4px 8px;border-radius:2px}
+.calc-savings-wrap{width:100%;background:var(--accent-dim);border:1px solid rgba(0,232,122,0.2);border-radius:2px;padding:14px 16px;margin-bottom:28px}
+.calc-savings-text{font-family:var(--mono);font-size:12px;color:var(--accent);line-height:1.6}
+.calc-savings-text strong{color:var(--text)}
+.calc-cta{display:block;width:100%;text-align:center;padding:14px 24px;background:var(--accent);color:var(--bg);font-family:var(--display);font-size:16px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-decoration:none;border-radius:2px;border:2px solid var(--accent);transition:all 0.2s}
+.calc-cta:hover{background:transparent;color:var(--accent)}
+.calc-source{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:20px;text-align:center}
+.calc-source a{color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.calc-source a:hover{color:var(--accent)}
+
+/* REPORT PREVIEW */
+.report-wrap{max-width:1100px;margin:0 auto;padding:100px 5%}
+.report-mock{background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.5)}
+.report-header{background:var(--surface2);padding:28px 36px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);flex-wrap:wrap;gap:16px}
+.report-title-area h3{font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+.report-meta{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.report-badges{display:flex;gap:8px;flex-wrap:wrap}
+.rbadge{font-family:var(--mono);font-size:11px;letter-spacing:1px;padding:5px 12px;border-radius:2px;text-transform:uppercase}
+.rbadge-crit{background:rgba(255,71,87,0.15);color:var(--red);border:1px solid rgba(255,71,87,0.3)}
+.rbadge-high{background:rgba(255,140,66,0.15);color:var(--orange);border:1px solid rgba(255,140,66,0.3)}
+.rbadge-med{background:rgba(255,209,102,0.12);color:var(--yellow);border:1px solid rgba(255,209,102,0.3)}
+.rbadge-low{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(56,182,255,0.3)}
+.rbadge-ok{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(0,232,122,0.3)}
+.report-body{display:grid;grid-template-columns:2fr 1fr}
+.report-findings{padding:28px 36px;border-right:1px solid var(--border)}
+.finding-item{padding:16px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:16px}
+.finding-item:last-child{border-bottom:none}
+.finding-severity{font-family:var(--mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:3px 8px;border-radius:2px;flex-shrink:0;margin-top:2px}
+.sev-crit{background:rgba(255,71,87,0.15);color:var(--red)}
+.sev-high{background:rgba(255,140,66,0.15);color:var(--orange)}
+.sev-med{background:rgba(255,209,102,0.12);color:var(--yellow)}
+.sev-low{background:var(--blue-dim);color:var(--blue)}
+.finding-content h4{font-family:var(--display);font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px}
+.finding-content p{font-size:13px;color:var(--muted)}
+.report-sidebar{padding:28px 24px;background:rgba(0,0,0,0.2)}
+.sidebar-section{margin-bottom:28px}
+.sidebar-label{font-family:var(--mono);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:12px;display:block}
+.risk-bar{margin-bottom:10px}
+.risk-bar-label{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;margin-bottom:5px}
+.risk-bar-track{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.risk-bar-fill{height:100%;border-radius:2px}
+.score-circle{width:80px;height:80px;border-radius:50%;border:3px solid var(--orange);display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:8px;box-shadow:0 0 20px rgba(255,140,66,0.2)}
+.score-num{font-family:var(--display);font-size:28px;font-weight:800;color:var(--orange);line-height:1}
+.score-denom{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.score-label{font-family:var(--mono);font-size:10px;color:var(--orange);letter-spacing:1px;text-transform:uppercase}
+
+/* FORM */
+#start{background:var(--surface);border-top:1px solid var(--border)}
+.form-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
+.form-guarantee{display:flex;flex-direction:column;gap:16px}
+.guarantee-item{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted)}
+.g-icon{width:32px;height:32px;background:var(--accent-dim);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+form{display:flex;flex-direction:column;gap:16px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-field{display:flex;flex-direction:column;gap:8px}
+.form-field label{font-family:var(--mono);font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.form-field input,.form-field select,.form-field textarea{background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:14px 16px;color:var(--text);font-family:var(--body);font-size:15px;outline:none;transition:border-color 0.2s;width:100%}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{border-color:var(--accent)}
+.form-field select{appearance:none;cursor:pointer}
+.form-field textarea{resize:vertical;min-height:100px}
+.form-field input::placeholder,.form-field textarea::placeholder{color:var(--muted);opacity:0.6}
+.form-submit{display:flex;align-items:center;justify-content:center;padding:18px 32px;background:var(--accent);color:var(--bg);font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:2px solid var(--accent);border-radius:2px;cursor:pointer;transition:all 0.2s;width:100%;margin-top:8px}
+.form-submit:hover{background:transparent;color:var(--accent)}
+.form-note{font-family:var(--mono);font-size:11px;color:var(--muted);text-align:center}
+.form-success{display:none;text-align:center;padding:48px 32px;background:var(--surface2);border:1px solid rgba(0,232,122,0.3);border-radius:4px}
+.form-success.show{display:block}
+.form-success h3{font-family:var(--display);font-size:32px;font-weight:800;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.form-success p{color:var(--muted);font-size:15px}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:48px 5%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:24px}
+.footer-logo{font-family:var(--display);font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--muted);text-decoration:none}
+.footer-logo span{color:var(--accent)}
+.footer-copy{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.footer-links{display:flex;gap:28px;list-style:none}
+.footer-links a{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;letter-spacing:1px;text-transform:uppercase;transition:color 0.2s}
+.footer-links a:hover{color:var(--accent)}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.5;transform:scale(0.8)}}
+@keyframes blink{50%{opacity:0}}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.6s ease,transform 0.6s ease}
+.reveal.visible{opacity:1;transform:none}
+
+/* RESPONSIVE */
+@media(max-width:960px){
+  .nav-links{display:none}.nav-mobile-toggle{display:block}
+  .nav-links.open{display:flex;flex-direction:column;position:fixed;top:64px;left:0;right:0;background:var(--bg);border-bottom:1px solid var(--border);padding:24px 5%;gap:20px;z-index:99}
+  .hero-terminal{display:none}
+  .problem-grid{grid-template-columns:1fr 1fr}
+  .steps-grid{grid-template-columns:1fr 1fr}
+  .step-item{border-right:none;border-bottom:1px solid var(--border)}
+  .calc-shell{grid-template-columns:1fr}
+  .calc-divider{width:100%;height:1px}
+  .calc-inputs,.calc-output{padding:32px 28px}
+  .form-wrapper{grid-template-columns:1fr;gap:48px}
+  .form-row{grid-template-columns:1fr}
+  .report-sidebar{display:none}
+  .report-body{grid-template-columns:1fr}
+}
+@media(max-width:600px){
+  .problem-grid{grid-template-columns:1fr}
+  .steps-grid{grid-template-columns:1fr}
+  .hero-stats{gap:24px}
+  .report-header{flex-direction:column}
+  .services-grid{grid-template-columns:1fr}
+  .calc-tabs{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">Aegis<span>Core</span></a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#problem">Problem</a></li>
+    <li><a href="#services">Services</a></li>
+    <li><a href="#how">Process</a></li>
+    <li><a href="#calculator">Calculator</a></li>
+    <li><a href="#start">Contact</a></li>
+    <li><a href="#start" class="nav-cta">Get Assessed</a></li>
+  </ul>
+  <button class="nav-mobile-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">&#9776;</button>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="hero-inner">
+    <div class="hero-tag">Security Testing for Startups</div>
+    <h1>Your Startup Has<em>Security Gaps.</em></h1>
+    <p class="hero-sub">AegisCore delivers <strong>fast, affordable vulnerability assessments</strong> built specifically for SaaS startups and small tech teams &mdash; no enterprise pricing, no 6-week timelines.</p>
+    <div class="hero-actions">
+      <a href="#start" class="btn-primary">Get Your Free Snapshot &rarr;</a>
+      <a href="#services" class="btn-secondary">View Pricing</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat-item"><span class="stat-num">48hr</span><span class="stat-label">Report Delivery</span></div>
+      <div class="stat-item"><span class="stat-num">&#8377;9,999</span><span class="stat-label">Starter Assessment</span></div>
+      <div class="stat-item"><span class="stat-num">100%</span><span class="stat-label">Plain English Reports</span></div>
+    </div>
+  </div>
+  <div class="hero-terminal">
+    <div class="terminal-bar">
+      <div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div>
+      <span class="terminal-title">aegiscore-scan &mdash; bash</span>
+    </div>
+    <div class="terminal-body" id="termBody"></div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section id="problem">
+  <div class="section-inner">
+    <div class="section-tag">The Problem</div>
+    <h2>Startups Are <span>Easy Targets</span></h2>
+    <p class="section-desc">Most early-stage companies ship fast and worry about security later. Attackers know this &mdash; and exploit it every single day.</p>
+    <div class="problem-grid">
+      <div class="problem-card reveal">
+        <div class="problem-icon">🔓</div>
+        <div class="prob-tag">Undetected</div>
+        <h3>Unknown Vulnerabilities</h3>
+        <p>Misconfigurations, exposed endpoints, outdated dependencies &mdash; your team doesn't know what it doesn't know. Every day you're live, the risk compounds silently.</p>
+      </div>
+      <div class="problem-card reveal">
+        <div class="problem-icon">💸</div>
+        <div class="prob-tag">Out of Reach</div>
+        <h3>Big Firm Pricing</h3>
+        <p>Enterprise security consultancies charge &#8377;5&ndash;15 lakhs for a VAPT engagement. That's not startup math. So founders skip it entirely and hope for the best.</p>
+      </div>
+      <div class="problem-card reveal">
+        <div class="problem-icon">📄</div>
+        <div class="prob-tag">Unusable</div>
+        <h3>Technical Jargon Reports</h3>
+        <p>Most scan reports are walls of CVE codes that non-security engineers can't act on. They get archived, ignored, and the vulnerabilities stay wide open.</p>
+      </div>
+      <div class="problem-card reveal">
+        <div class="problem-icon">⏳</div>
+        <div class="prob-tag">Too Slow</div>
+        <h3>Weeks of Waiting</h3>
+        <p>By the time a traditional firm delivers findings, you've already shipped three more releases with new exposures. Speed matters as much as depth.</p>
+      </div>
+      <div class="problem-card reveal">
+        <div class="problem-icon">📉</div>
+        <div class="prob-tag">Compliance Risk</div>
+        <h3>Failing Investor Due Diligence</h3>
+        <p>Series A investors and enterprise clients now ask for security documentation. No audit trail means lost deals, stalled funding rounds, and broken trust before it starts.</p>
+      </div>
+      <div class="problem-card reveal">
+        <div class="problem-icon">🎯</div>
+        <div class="prob-tag">Targeted</div>
+        <h3>Startups Are Prime Targets</h3>
+        <p>Attackers specifically hunt early-stage companies &mdash; valuable customer data, weak defences, no incident response plan. You're a high-value, low-effort target.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="section-inner">
+    <div class="section-tag">Services &amp; Pricing</div>
+    <h2>Clear Pricing, <span>No Surprises</span></h2>
+    <p class="section-desc">Two focused offerings designed for startups. Start with a Snapshot, graduate to full coverage when you're ready.</p>
+    <div class="services-grid">
+      <div class="service-card reveal">
+        <div class="service-badge">Starter</div>
+        <h3>Security Snapshot</h3>
+        <div class="price">&#8377;9,999</div>
+        <div class="price-sub">One-time &middot; Delivered in 48 hours</div>
+        <div class="service-divider"></div>
+        <ul class="feature-list">
+          <li>External attack surface scan</li>
+          <li>Open port &amp; service enumeration</li>
+          <li>SSL/TLS configuration check</li>
+          <li>Subdomain exposure analysis</li>
+          <li>Common misconfiguration detection</li>
+          <li>Executive summary in plain English</li>
+          <li>Top-3 priority fixes with guidance</li>
+        </ul>
+        <a href="#start" class="btn-service btn-service-outline">Get Snapshot &rarr;</a>
+      </div>
+      <div class="service-card featured reveal">
+        <div class="service-badge">Most Popular</div>
+        <h3>Web App VAPT</h3>
+        <div class="price">&#8377;24,999</div>
+        <div class="price-sub">Full engagement &middot; 5&ndash;7 days</div>
+        <div class="service-divider"></div>
+        <ul class="feature-list">
+          <li>Everything in Snapshot, plus:</li>
+          <li>OWASP Top 10 manual testing</li>
+          <li>Authentication &amp; session analysis</li>
+          <li>API endpoint security review</li>
+          <li>Business logic vulnerability testing</li>
+          <li>Full report with CVSS scores</li>
+          <li>Remediation plan + 1 retest round</li>
+          <li>30-min debrief call included</li>
+        </ul>
+        <a href="#start" class="btn-service btn-service-filled">Get Full VAPT &rarr;</a>
+      </div>
+      <div class="service-card reveal">
+        <div class="service-badge">Enterprise</div>
+        <h3>Custom Engagement</h3>
+        <div class="price">Custom</div>
+        <div class="price-sub">Scoped to your stack &middot; Timeline varies</div>
+        <div class="service-divider"></div>
+        <ul class="feature-list">
+          <li>Infrastructure &amp; cloud security review</li>
+          <li>Internal network penetration testing</li>
+          <li>Source code security review</li>
+          <li>Compliance readiness (SOC 2, ISO 27001)</li>
+          <li>Red team simulation</li>
+          <li>Ongoing security retainer options</li>
+        </ul>
+        <a href="#start" class="btn-service btn-service-outline">Contact Us &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="section-inner">
+    <div class="section-tag">Process</div>
+    <h2>How It <span>Works</span></h2>
+    <p class="section-desc">From form submission to actionable report &mdash; no meetings required, no back-and-forth delays.</p>
+    <div class="steps-grid">
+      <div class="step-item reveal">
+        <div class="step-num">01</div>
+        <div class="step-accent">You</div>
+        <h3>Submit the Form</h3>
+        <p>Fill in your company details and the domain you want assessed. Sign the authorization agreement. Takes 3 minutes.</p>
+      </div>
+      <div class="step-item reveal">
+        <div class="step-num">02</div>
+        <div class="step-accent">Us</div>
+        <h3>We Run the Scans</h3>
+        <p>Our toolset enumerates your attack surface &mdash; subdomains, open ports, services, SSL configs, and common misconfigurations.</p>
+      </div>
+      <div class="step-item reveal">
+        <div class="step-num">03</div>
+        <div class="step-accent">Us</div>
+        <h3>Manual Review</h3>
+        <p>A human reviews every finding. No raw scanner dumps. We filter false positives and validate what's real before writing it up.</p>
+      </div>
+      <div class="step-item reveal">
+        <div class="step-num">04</div>
+        <div class="step-accent">You</div>
+        <h3>Receive Your Report</h3>
+        <p>A clean, branded PDF lands in your inbox within 48 hours. Plain English findings, actionable fixes, no jargon.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BREACH COST CALCULATOR -->
+<section id="calculator">
+  <div class="section-inner">
+    <div class="section-tag">ROI Calculator</div>
+    <h2>What a Breach Would <span>Cost You</span></h2>
+    <p class="section-desc">Adjust the parameters below to see your real financial exposure &mdash; then compare it to the cost of prevention.</p>
+    <div class="calc-shell reveal">
+      <div class="calc-inputs">
+        <div class="calc-group">
+          <div class="calc-label">Industry</div>
+          <div class="calc-tabs">
+            <button class="calc-tab active" data-mult="1.8">Fintech</button>
+            <button class="calc-tab" data-mult="2.5">Healthcare</button>
+            <button class="calc-tab" data-mult="2.2">Legal</button>
+            <button class="calc-tab" data-mult="1.5">Enterprise IT</button>
+          </div>
+        </div>
+        <div class="calc-group">
+          <div class="calc-label-row">
+            <div class="calc-label">Customer Records Exposed</div>
+            <div class="calc-val-badge" id="recordsVal">10,000</div>
+          </div>
+          <div class="calc-slider-wrap">
+            <input type="range" id="recordsInput" min="1000" max="500000" step="1000" value="10000" class="calc-slider">
+            <div class="calc-slider-labels"><span>1K records</span><span>500K records</span></div>
+          </div>
+        </div>
+        <div class="calc-group">
+          <div class="calc-label">Data Types at Risk</div>
+          <div class="calc-checks">
+            <label class="calc-check-item">
+              <input type="checkbox" class="calc-check" value="1.2">
+              <span class="calc-checkmark"></span>
+              <span>Personal Data (PII)</span>
+            </label>
+            <label class="calc-check-item">
+              <input type="checkbox" class="calc-check" value="1.5">
+              <span class="calc-checkmark"></span>
+              <span>Auth Credentials</span>
+            </label>
+            <label class="calc-check-item">
+              <input type="checkbox" class="calc-check" value="2.0">
+              <span class="calc-checkmark"></span>
+              <span>Financial / PCI Data</span>
+            </label>
+            <label class="calc-check-item">
+              <input type="checkbox" class="calc-check" value="2.5">
+              <span class="calc-checkmark"></span>
+              <span>Health Records (ePHI)</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div class="calc-divider"></div>
+      <div class="calc-output">
+        <div class="calc-out-label">Estimated Breach Liability</div>
+        <div class="calc-big-number" id="totalCost" data-value="0">&#8377;0</div>
+        <div class="calc-out-divider"></div>
+        <div class="calc-roi-row">
+          <div class="calc-roi-item">
+            <div class="calc-roi-label">AegisCore Protection</div>
+            <div class="calc-roi-cost">&#8377;9,999</div>
+          </div>
+          <div class="calc-roi-vs">VS</div>
+          <div class="calc-roi-item calc-roi-danger">
+            <div class="calc-roi-label">Your Breach Exposure</div>
+            <div class="calc-roi-cost" id="exposureShort">&#8377;0</div>
+          </div>
+        </div>
+        <div class="calc-savings-wrap">
+          <div class="calc-savings-text" id="savingsText">Select your industry and adjust the slider to calculate &rarr;</div>
+        </div>
+        <a href="#start" class="calc-cta">Protect My Startup &rarr;</a>
+      </div>
+    </div>
+    <p class="calc-source">Estimates based on the <a href="https://www.ibm.com/reports/data-breach" target="_blank" rel="noopener">IBM Cost of a Data Breach Report 2024</a>. Figures are illustrative.</p>
+  </div>
+</section>
+
+<!-- REPORT PREVIEW -->
+<section>
+  <div class="report-wrap">
+    <div class="section-tag reveal">Sample Report</div>
+    <h2 class="reveal">What Your <span>Report Looks Like</span></h2>
+    <p class="section-desc reveal">Every finding is clear, prioritized, and paired with a concrete fix. No CVE soup &mdash; just what matters and what to do about it.</p>
+    <div class="report-mock reveal">
+      <div class="report-header">
+        <div class="report-title-area">
+          <h3>AegisCore Security Assessment</h3>
+          <div class="report-meta">Target: acme-startup.io &nbsp;&middot;&nbsp; Scope: External &nbsp;&middot;&nbsp; Feb 2026 &nbsp;&middot;&nbsp; Confidential</div>
+        </div>
+        <div class="report-badges">
+          <span class="rbadge rbadge-crit">2 Critical</span>
+          <span class="rbadge rbadge-high">3 High</span>
+          <span class="rbadge rbadge-med">5 Medium</span>
+          <span class="rbadge rbadge-low">4 Low</span>
+          <span class="rbadge rbadge-ok">7 Info</span>
+        </div>
+      </div>
+      <div class="report-body">
+        <div class="report-findings">
+          <div class="finding-item">
+            <span class="finding-severity sev-crit">Critical</span>
+            <div class="finding-content">
+              <h4>Exposed Admin Panel &mdash; No Auth</h4>
+              <p>Your admin dashboard at /admin is publicly accessible without authentication. Anyone on the internet can access it and view customer data.</p>
+            </div>
+          </div>
+          <div class="finding-item">
+            <span class="finding-severity sev-crit">Critical</span>
+            <div class="finding-content">
+              <h4>SQL Injection in Login Form</h4>
+              <p>The login endpoint is vulnerable to SQL injection. An attacker can bypass authentication or dump your entire database in minutes.</p>
+            </div>
+          </div>
+          <div class="finding-item">
+            <span class="finding-severity sev-high">High</span>
+            <div class="finding-content">
+              <h4>Outdated TLS &mdash; Accepts TLS 1.0</h4>
+              <p>Your server accepts TLS 1.0 connections which have known vulnerabilities. Should only accept TLS 1.2 and 1.3.</p>
+            </div>
+          </div>
+          <div class="finding-item">
+            <span class="finding-severity sev-high">High</span>
+            <div class="finding-content">
+              <h4>API Keys Exposed in JS Bundle</h4>
+              <p>A live AWS API key was found hardcoded in your frontend JavaScript. Anyone viewing your source can use it to access your cloud account.</p>
+            </div>
+          </div>
+          <div class="finding-item">
+            <span class="finding-severity sev-med">Medium</span>
+            <div class="finding-content">
+              <h4>Missing Security Headers</h4>
+              <p>X-Frame-Options, CSP, and HSTS headers are absent. This enables clickjacking and other browser-based attacks against your users.</p>
+            </div>
+          </div>
+        </div>
+        <div class="report-sidebar">
+          <div class="sidebar-section">
+            <span class="sidebar-label">Risk Score</span>
+            <div class="score-circle">
+              <span class="score-num">6.4</span>
+              <span class="score-denom">/10</span>
+            </div>
+            <span class="score-label">Medium-High Risk</span>
+          </div>
+          <div class="sidebar-section">
+            <span class="sidebar-label">By Severity</span>
+            <div class="risk-bar">
+              <div class="risk-bar-label"><span style="color:var(--red);font-family:var(--mono);font-size:11px">Critical</span><span style="color:var(--muted);font-family:var(--mono);font-size:11px">2</span></div>
+              <div class="risk-bar-track"><div class="risk-bar-fill" style="width:20%;background:var(--red)"></div></div>
+            </div>
+            <div class="risk-bar">
+              <div class="risk-bar-label"><span style="color:var(--orange);font-family:var(--mono);font-size:11px">High</span><span style="color:var(--muted);font-family:var(--mono);font-size:11px">3</span></div>
+              <div class="risk-bar-track"><div class="risk-bar-fill" style="width:30%;background:var(--orange)"></div></div>
+            </div>
+            <div class="risk-bar">
+              <div class="risk-bar-label"><span style="color:var(--yellow);font-family:var(--mono);font-size:11px">Medium</span><span style="color:var(--muted);font-family:var(--mono);font-size:11px">5</span></div>
+              <div class="risk-bar-track"><div class="risk-bar-fill" style="width:50%;background:var(--yellow)"></div></div>
+            </div>
+            <div class="risk-bar">
+              <div class="risk-bar-label"><span style="color:var(--blue);font-family:var(--mono);font-size:11px">Low</span><span style="color:var(--muted);font-family:var(--mono);font-size:11px">4</span></div>
+              <div class="risk-bar-track"><div class="risk-bar-fill" style="width:40%;background:var(--blue)"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FORM -->
+<section id="start">
+  <div class="section-inner">
+    <div class="form-wrapper">
+      <div>
+        <div class="section-tag">Get Started</div>
+        <h2>Request Your <span>Assessment</span></h2>
+        <p class="section-desc">Fill this out and we'll get back to you within 24 hours with a scoping confirmation and authorization agreement to sign.</p>
+        <div class="form-guarantee">
+          <div class="guarantee-item"><div class="g-icon">🔒</div><span>All information is kept strictly confidential and never shared with third parties.</span></div>
+          <div class="guarantee-item"><div class="g-icon">📋</div><span>Authorization agreement sent before any scanning begins &mdash; you stay in control.</span></div>
+          <div class="guarantee-item"><div class="g-icon">⚡</div><span>Starter reports delivered within 48 hours of authorization confirmation.</span></div>
+          <div class="guarantee-item"><div class="g-icon">💬</div><span>Not sure which plan? Tell us your situation and we'll recommend the right fit.</span></div>
+        </div>
+      </div>
+      <div>
+        <div class="form-success" id="formSuccess">
+          <h3>✓ Request Received</h3>
+          <p>We'll review your submission and get back to you within 24 hours with next steps and your authorization agreement.</p>
+        </div>
+        <form id="assessmentForm">
+          <div class="form-row">
+            <div class="form-field"><label>Your Name *</label><input type="text" name="name" placeholder="Arjun Sharma" required></div>
+            <div class="form-field"><label>Your Role</label><input type="text" name="role" placeholder="CTO / Founder"></div>
+          </div>
+          <div class="form-field"><label>Work Email *</label><input type="email" name="email" placeholder="arjun@yourcompany.com" required></div>
+          <div class="form-row">
+            <div class="form-field"><label>Company Name *</label><input type="text" name="company" placeholder="Acme SaaS" required></div>
+            <div class="form-field"><label>Phone / WhatsApp</label><input type="tel" name="phone" placeholder="+91 98765 43210"></div>
+          </div>
+          <div class="form-field"><label>Domain to Assess *</label><input type="text" name="domain" placeholder="https://yourapp.com" required></div>
+          <div class="form-field">
+            <label>Service Required *</label>
+            <select name="service" required>
+              <option value="" disabled selected>Select a service...</option>
+              <option value="snapshot">Security Snapshot — &#8377;9,999</option>
+              <option value="vapt">Web App VAPT — &#8377;24,999</option>
+              <option value="custom">Custom Engagement — Let's Talk</option>
+              <option value="unsure">Not Sure — Help Me Decide</option>
+            </select>
+          </div>
+          <div class="form-field"><label>Anything We Should Know?</label><textarea name="notes" placeholder="Stack you're running, specific concerns, compliance requirements, previous incidents..."></textarea></div>
+          <button type="submit" class="form-submit">Submit Assessment Request →</button>
+          <p class="form-note">No spam. No cold calls. Just a scoping reply within 24 hours.</p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a href="#" class="footer-logo">Aegis<span>Core</span></a>
+  <p class="footer-copy">&copy; 2026 AegisCore. All rights reserved. Authorized testing only.</p>
+  <ul class="footer-links">
+    <li><a href="#">Privacy</a></li>
+    <li><a href="#">Terms</a></li>
+    <li><a href="mailto:hello@aegiscore.in">Contact</a></li>
+  </ul>
+</footer>
+
+<script>
+// Terminal
+var termLines=[
+  {t:'cmd',    s:'aegiscore scan --target acme-startup.io'},
+  {t:'output', s:'◆ Initializing recon engine...'},
+  {t:'output', s:'◆ Subdomain enumeration: 23 found'},
+  {t:'output', s:'◆ Port scan: 443, 80, 8080 open'},
+  {t:'warn',   s:'! TLS 1.0 detected — downgrade risk'},
+  {t:'output', s:'◆ Checking security headers...'},
+  {t:'crit',   s:'!! Admin panel exposed: /admin [NO AUTH]'},
+  {t:'output', s:'◆ Analysing JS bundles for secrets...'},
+  {t:'crit',   s:'!! AWS key found in main.bundle.js'},
+  {t:'output', s:'◆ Generating report...'},
+  {t:'ok',     s:'✓ Report ready — 14 findings, 2 Critical'},
+];
+var tIdx=0,tEl=document.getElementById('termBody');
+function tAdd(type,html){
+  var d=document.createElement('div');d.className='t-line';
+  if(type==='cmd') d.innerHTML='<span class="t-prompt">$</span><span class="t-cmd"> '+html+'</span>';
+  else{var c={output:'t-output',warn:'t-warn',crit:'t-crit',ok:'t-ok'}[type]||'t-output';d.innerHTML='<span class="'+c+'">'+html+'</span>';}
+  tEl.appendChild(d);tEl.scrollTop=tEl.scrollHeight;
+}
+function tRun(){
+  if(tIdx>=termLines.length){
+    var cur=document.createElement('span');cur.className='t-cursor';tEl.appendChild(cur);
+    setTimeout(function(){tEl.innerHTML='';tIdx=0;setTimeout(tRun,800);},3500);return;
+  }
+  setTimeout(function(){tAdd(termLines[tIdx].t,termLines[tIdx].s);tIdx++;tRun();},tIdx===0?500:350+Math.random()*250);
+}
+tRun();
+
+// Scroll reveal
+var obs=new IntersectionObserver(function(entries){
+  entries.forEach(function(e,i){if(e.isIntersecting) setTimeout(function(){e.target.classList.add('visible');},i*80);});
+},{threshold:0.08});
+document.querySelectorAll('.reveal').forEach(function(r){obs.observe(r);});
+
+// Mobile nav
+document.querySelectorAll('#navLinks a').forEach(function(a){
+  a.addEventListener('click',function(){document.getElementById('navLinks').classList.remove('open');});
+});
+
+// Breach Cost Calculator
+(function(){
+  var rInput=document.getElementById('recordsInput');
+  var rVal=document.getElementById('recordsVal');
+  var costEl=document.getElementById('totalCost');
+  var savEl=document.getElementById('savingsText');
+  var expEl=document.getElementById('exposureShort');
+  var tabs=document.querySelectorAll('.calc-tab');
+  var checks=document.querySelectorAll('.calc-check');
+  if(!rInput) return;
+  var state={records:10000,mult:1.8,base:7100},af;
+
+  function fmt(n){
+    if(n>=10000000) return '₹'+(n/10000000).toFixed(2)+' Cr';
+    if(n>=100000)   return '₹'+(n/100000).toFixed(1)+'L';
+    return '₹'+Math.floor(n).toLocaleString('en-IN');
+  }
+  function fmtS(n){
+    if(n>=10000000) return '₹'+(n/10000000).toFixed(1)+' Cr';
+    if(n>=100000)   return '₹'+(n/100000).toFixed(0)+'L';
+    return '₹'+Math.floor(n).toLocaleString('en-IN');
+  }
+
+  // Update slider gradient fill
+  function updateSlider(){
+    var pct=((state.records-1000)/499000*100).toFixed(1);
+    rInput.style.background='linear-gradient(to right, #00e87a 0%, #00e87a '+pct+'%, #1e2330 '+pct+'%, #1e2330 100%)';
+  }
+
+  function animTo(el,end){
+    if(af) cancelAnimationFrame(af);
+    var s=parseFloat(el.dataset.value||0),t0=performance.now(),dur=900;
+    function step(now){
+      var p=Math.min((now-t0)/dur,1),e=1-Math.pow(1-p,3),cur=s+(end-s)*e;
+      el.textContent=fmt(cur);el.dataset.value=cur;
+      if(p<1) af=requestAnimationFrame(step);
+      else{el.textContent=fmt(end);el.dataset.value=end;}
+    }
+    af=requestAnimationFrame(step);
+  }
+
+  function calc(){
+    var ra=0;
+    checks.forEach(function(c){if(c.checked) ra+=parseFloat(c.value);});
+    var total=state.records*state.base*state.mult*(1+ra/4);
+    costEl.style.color=total>5000000?'var(--red)':total>1000000?'var(--orange)':'var(--yellow)';
+    animTo(costEl,total);
+    if(expEl) expEl.textContent=fmtS(total);
+    if(savEl){
+      var saved=total-9999;
+      if(saved>10000) savEl.innerHTML='AegisCore saves you an estimated <strong>'+fmtS(saved)+'</strong> — that\'s a <strong>'+Math.round(saved/9999)+'x return</strong> on your ₹9,999 investment.';
+      else savEl.textContent='Any exposure is worth protecting. Our ₹9,999 Snapshot costs less than one hour of breach response.';
+    }
+    updateSlider();
+  }
+
+  rInput.addEventListener('input',function(){
+    state.records=parseInt(this.value);
+    if(rVal) rVal.textContent=state.records.toLocaleString('en-IN');
+    calc();
+  });
+  tabs.forEach(function(tab){
+    tab.addEventListener('click',function(){
+      tabs.forEach(function(t){t.classList.remove('active');});
+      this.classList.add('active');state.mult=parseFloat(this.dataset.mult);calc();
+    });
+  });
+  checks.forEach(function(c){c.addEventListener('change',calc);});
+  calc();
+})();
+
+// Form
+document.getElementById('assessmentForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  this.style.display='none';
+  document.getElementById('formSuccess').classList.add('show');
+  document.getElementById('start').scrollIntoView({behavior:'smooth'});
+});
+</script>
+</body>
+</html>

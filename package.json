@@ -1,0 +1,14 @@
+{
+  "name": "aegiscore-backend",
+  "version": "1.0.0",
+  "description": "AegisCore form backend - Vercel serverless functions",
+  "main": "api/submit.js",
+  "dependencies": {
+    "google-auth-library": "^9.6.3",
+    "google-spreadsheet": "^4.1.2",
+    "resend": "^3.2.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

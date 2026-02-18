@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AegisCore Admin Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#07080b; --surface:#0e1016; --surface2:#141720; --border:#1e2330;
+  --accent:#00e87a; --accent-dim:rgba(0,232,122,0.12); --accent-glow:rgba(0,232,122,0.25);
+  --red:#ff4757; --orange:#ff8c42; --yellow:#ffd166; --blue:#38b6ff;
+  --text:#e8ecf0; --muted:#6b7589;
+  --mono:'IBM Plex Mono',monospace; --display:'Barlow Condensed',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.6;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,232,122,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(0,232,122,0.015) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+/* LOGIN */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;position:relative;z-index:1}
+.login-box{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:48px 40px;width:400px;max-width:90%}
+.login-logo{font-family:var(--display);font-size:24px;font-weight:800;letter-spacing:3px;text-transform:uppercase;color:var(--text);margin-bottom:8px}
+.login-logo span{color:var(--accent)}
+.login-subtitle{font-size:11px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:32px}
+.login-field{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.login-field label{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.login-field input{background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:12px 14px;color:var(--text);font-family:var(--mono);font-size:14px;outline:none;transition:border-color 0.2s}
+.login-field input:focus{border-color:var(--accent)}
+.login-btn{width:100%;padding:14px;background:var(--accent);color:var(--bg);font-family:var(--display);font-size:15px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:2px solid var(--accent);border-radius:2px;cursor:pointer;transition:all 0.2s;margin-top:8px}
+.login-btn:hover{background:transparent;color:var(--accent)}
+.login-error{color:var(--red);font-size:12px;margin-top:8px;display:none}
+.login-error.show{display:block}
+
+/* DASHBOARD */
+#dashboard{display:none;position:relative;z-index:1;padding:0}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:20px 5%;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.topbar-logo{font-family:var(--display);font-size:20px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:var(--text)}
+.topbar-logo span{color:var(--accent)}
+.topbar-right{display:flex;align-items:center;gap:20px}
+.stat-pill{background:var(--surface2);border:1px solid var(--border);padding:8px 16px;border-radius:2px;font-size:11px;letter-spacing:1px;text-transform:uppercase}
+.stat-pill strong{color:var(--accent);font-size:18px;margin-right:6px;font-family:var(--display)}
+.logout-btn{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:none;border:1px solid var(--border);padding:8px 16px;border-radius:2px;cursor:pointer;transition:all 0.2s}
+.logout-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.container{max-width:1400px;margin:0 auto;padding:40px 5%}
+.header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:16px}
+h1{font-family:var(--display);font-size:32px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text)}
+h1 span{color:var(--accent)}
+.filter-group{display:flex;gap:8px;flex-wrap:wrap}
+.filter-btn{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:8px 14px;border-radius:2px;cursor:pointer;transition:all 0.2s}
+.filter-btn:hover{border-color:var(--accent);color:var(--text)}
+.filter-btn.active{background:var(--accent-dim);border-color:rgba(0,232,122,0.4);color:var(--accent)}
+
+.submissions-grid{display:flex;flex-direction:column;gap:1px;background:var(--border);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.submission-card{background:var(--surface);padding:24px 28px;transition:background 0.2s;display:grid;grid-template-columns:1fr 140px 120px 200px;gap:20px;align-items:start}
+.submission-card:hover{background:var(--surface2)}
+.sub-main h3{font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:0.5px;color:var(--text);margin-bottom:6px}
+.sub-meta{font-size:11px;color:var(--muted);margin-bottom:4px}
+.sub-meta strong{color:var(--text)}
+.sub-service{display:inline-block;font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(0,232,122,0.2);padding:3px 8px;border-radius:2px;margin-top:8px}
+.sub-date{font-size:11px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.sub-date-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+.sub-date-val{color:var(--text)}
+.status-badge{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:6px 12px;border-radius:2px;font-weight:600;display:inline-block}
+.status-new{background:rgba(56,182,255,0.12);color:var(--blue);border:1px solid rgba(56,182,255,0.3)}
+.status-progress{background:rgba(255,209,102,0.12);color:var(--yellow);border:1px solid rgba(255,209,102,0.3)}
+.status-complete{background:var(--accent-dim);color:var(--accent);border:1px solid rgba(0,232,122,0.3)}
+.sub-actions{display:flex;flex-direction:column;gap:8px}
+.action-btn{font-size:11px;letter-spacing:1px;text-transform:uppercase;padding:8px 14px;border-radius:2px;cursor:pointer;transition:all 0.2s;text-align:center;font-family:var(--mono);font-weight:500;border:1px solid var(--border);background:var(--surface2);color:var(--text)}
+.action-btn:hover{border-color:var(--accent);color:var(--accent)}
+.action-btn-primary{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.action-btn-primary:hover{background:transparent;color:var(--accent)}
+
+.empty-state{text-align:center;padding:80px 20px;background:var(--surface);border:1px solid var(--border);border-radius:4px}
+.empty-icon{font-size:48px;margin-bottom:16px;opacity:0.3}
+.empty-text{font-size:14px;color:var(--muted)}
+
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:100;align-items:center;justify-content:center;padding:20px}
+.modal.show{display:flex}
+.modal-content{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:32px;max-width:600px;width:100%;max-height:90vh;overflow-y:auto}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}
+.modal-title{font-family:var(--display);font-size:22px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:var(--text)}
+.modal-close{font-size:24px;color:var(--muted);background:none;border:none;cursor:pointer;transition:color 0.2s}
+.modal-close:hover{color:var(--accent)}
+.modal-row{margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.modal-row:last-child{border-bottom:none;margin-bottom:0}
+.modal-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.modal-value{font-size:13px;color:var(--text);line-height:1.6}
+.modal-actions{display:flex;gap:12px;margin-top:24px}
+
+@media(max-width:1100px){
+  .submission-card{grid-template-columns:1fr;gap:16px}
+  .sub-actions{flex-direction:row}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN SCREEN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">Aegis<span>Core</span></div>
+    <div class="login-subtitle">Admin Dashboard</div>
+    <form id="loginForm">
+      <div class="login-field">
+        <label>Password</label>
+        <input type="password" id="passwordInput" placeholder="Enter admin password" required>
+      </div>
+      <button type="submit" class="login-btn">Login →</button>
+      <div class="login-error" id="loginError">Incorrect password. Try again.</div>
+    </form>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="topbar-logo">Aegis<span>Core</span></div>
+    <div class="topbar-right">
+      <div class="stat-pill"><strong id="totalCount">0</strong> Total</div>
+      <div class="stat-pill"><strong id="newCount">0</strong> New</div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="header-row">
+      <h1>Client <span>Submissions</span></h1>
+      <div class="filter-group">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="new">New</button>
+        <button class="filter-btn" data-filter="progress">In Progress</button>
+        <button class="filter-btn" data-filter="complete">Complete</button>
+      </div>
+    </div>
+
+    <div class="submissions-grid" id="submissionsGrid">
+      <!-- Cards populate via JS -->
+    </div>
+
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div class="empty-icon">📭</div>
+      <div class="empty-text">No submissions yet. Share your landing page to start receiving requests.</div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal" id="detailModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <div class="modal-title">Submission Details</div>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div id="modalBody"></div>
+    <div class="modal-actions">
+      <button class="action-btn action-btn-primary" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────
+//  CONFIG
+// ─────────────────────────────────────────────
+const ADMIN_PASSWORD = "aegis2026";  // ← CHANGE THIS
+
+// ─────────────────────────────────────────────
+//  MOCK DATA (will be replaced with real backend)
+// ─────────────────────────────────────────────
+let submissions = [
+  {
+    id: "SUB-001",
+    timestamp: "2026-02-17T14:32:00Z",
+    name: "Arjun Sharma",
+    role: "CTO",
+    email: "arjun@acmesaas.com",
+    company: "Acme SaaS Pvt Ltd",
+    phone: "+91 98765 43210",
+    domain: "https://acme-startup.io",
+    service: "vapt",
+    notes: "Need this done before Series A due diligence in 3 weeks. Our tech stack is Node.js + React + AWS.",
+    status: "new",
+  },
+  {
+    id: "SUB-002",
+    timestamp: "2026-02-16T09:15:00Z",
+    name: "Priya Mehta",
+    role: "Founder",
+    email: "priya@healthtech.in",
+    company: "MediSync",
+    phone: "+91 98123 45678",
+    domain: "https://medisync.app",
+    service: "snapshot",
+    notes: "Just launched 2 months ago. Want to make sure we're not exposing anything critical.",
+    status: "progress",
+  },
+  {
+    id: "SUB-003",
+    timestamp: "2026-02-15T16:45:00Z",
+    name: "Rahul Singh",
+    role: "Engineering Lead",
+    email: "rahul@fintech.co",
+    company: "PayFlow Technologies",
+    phone: "+91 91234 56789",
+    domain: "https://payflow.co",
+    service: "vapt",
+    notes: "Processing financial transactions. Need full VAPT + compliance readiness check for PCI-DSS.",
+    status: "complete",
+  },
+  {
+    id: "SUB-004",
+    timestamp: "2026-02-17T11:20:00Z",
+    name: "Neha Gupta",
+    role: "Product Manager",
+    email: "neha@edtech.io",
+    company: "SkillPath",
+    phone: "+91 98765 12345",
+    domain: "https://skillpath.io",
+    service: "unsure",
+    notes: "We're an edtech platform with 50K users. Not sure if we need Snapshot or full VAPT — help us decide?",
+    status: "new",
+  },
+  {
+    id: "SUB-005",
+    timestamp: "2026-02-14T08:30:00Z",
+    name: "Karan Malhotra",
+    role: "CTO",
+    email: "karan@logistics.in",
+    company: "SwiftShip Logistics",
+    phone: "+91 99887 76655",
+    domain: "https://swiftship.in",
+    service: "custom",
+    notes: "Looking for ongoing security retainer — monthly pentests + incident response support.",
+    status: "progress",
+  },
+];
+
+// ─────────────────────────────────────────────
+//  LOGIN
+// ─────────────────────────────────────────────
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const pass = document.getElementById('passwordInput').value;
+  const err = document.getElementById('loginError');
+  if (pass === ADMIN_PASSWORD) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    renderSubmissions();
+  } else {
+    err.classList.add('show');
+    setTimeout(() => err.classList.remove('show'), 3000);
+  }
+});
+
+function logout() {
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('passwordInput').value = '';
+}
+
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
+let currentFilter = 'all';
+
+function renderSubmissions() {
+  const grid = document.getElementById('submissionsGrid');
+  const empty = document.getElementById('emptyState');
+  
+  // Filter
+  let filtered = submissions;
+  if (currentFilter !== 'all') {
+    filtered = submissions.filter(s => s.status === currentFilter);
+  }
+
+  // Update counts
+  document.getElementById('totalCount').textContent = submissions.length;
+  document.getElementById('newCount').textContent = submissions.filter(s => s.status === 'new').length;
+
+  if (filtered.length === 0) {
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  grid.style.display = 'flex';
+  empty.style.display = 'none';
+  grid.innerHTML = '';
+
+  filtered.forEach(sub => {
+    const card = document.createElement('div');
+    card.className = 'submission-card';
+    
+    const statusClass = {
+      new: 'status-new',
+      progress: 'status-progress',
+      complete: 'status-complete',
+    }[sub.status];
+
+    const statusLabel = {
+      new: 'New',
+      progress: 'In Progress',
+      complete: 'Complete',
+    }[sub.status];
+
+    const serviceLabel = {
+      snapshot: 'Snapshot — ₹9,999',
+      vapt: 'Web App VAPT — ₹24,999',
+      custom: 'Custom Engagement',
+      unsure: 'Help Me Decide',
+    }[sub.service];
+
+    const date = new Date(sub.timestamp);
+    const dateStr = date.toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+    const timeStr = date.toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'});
+
+    card.innerHTML = `
+      <div class="sub-main">
+        <h3>${sub.company}</h3>
+        <div class="sub-meta"><strong>${sub.name}</strong> • ${sub.role}</div>
+        <div class="sub-meta">${sub.email} • ${sub.phone || 'No phone'}</div>
+        <div class="sub-meta">Domain: <strong>${sub.domain}</strong></div>
+        <div class="sub-service">${serviceLabel}</div>
+      </div>
+      <div class="sub-date">
+        <div class="sub-date-label">Submitted</div>
+        <div class="sub-date-val">${dateStr}</div>
+        <div class="sub-date-val">${timeStr}</div>
+      </div>
+      <div>
+        <span class="status-badge ${statusClass}">${statusLabel}</span>
+      </div>
+      <div class="sub-actions">
+        <button class="action-btn" onclick="viewDetails('${sub.id}')">View Details</button>
+        ${sub.status === 'new' ? `<button class="action-btn action-btn-primary" onclick="startWork('${sub.id}')">Start Work</button>` : ''}
+        ${sub.status === 'progress' ? `<button class="action-btn action-btn-primary" onclick="markComplete('${sub.id}')">Mark Complete</button>` : ''}
+        ${sub.status === 'complete' ? `<button class="action-btn" onclick="generateReport('${sub.id}')">Generate Report</button>` : ''}
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+// ─────────────────────────────────────────────
+//  FILTERS
+// ─────────────────────────────────────────────
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    currentFilter = this.dataset.filter;
+    renderSubmissions();
+  });
+});
+
+// ─────────────────────────────────────────────
+//  ACTIONS
+// ─────────────────────────────────────────────
+function viewDetails(id) {
+  const sub = submissions.find(s => s.id === id);
+  if (!sub) return;
+
+  const serviceLabel = {
+    snapshot: 'Snapshot — ₹9,999',
+    vapt: 'Web App VAPT — ₹24,999',
+    custom: 'Custom Engagement',
+    unsure: 'Help Me Decide',
+  }[sub.service];
+
+  const date = new Date(sub.timestamp);
+  const dateStr = date.toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+
+  const body = document.getElementById('modalBody');
+  body.innerHTML = `
+    <div class="modal-row">
+      <div class="modal-label">Submission ID</div>
+      <div class="modal-value">${sub.id}</div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">Timestamp</div>
+      <div class="modal-value">${dateStr}</div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">Company</div>
+      <div class="modal-value">${sub.company}</div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">Contact Person</div>
+      <div class="modal-value">${sub.name} — ${sub.role}</div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">Email</div>
+      <div class="modal-value">${sub.email}</div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">Phone</div>
+      <div class="modal-value">${sub.phone || 'Not provided'}</div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">Domain to Assess</div>
+      <div class="modal-value">${sub.domain}</div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">Service Requested</div>
+      <div class="modal-value">${serviceLabel}</div>
+    </div>
+    <div class="modal-row">
+      <div class="modal-label">Additional Notes</div>
+      <div class="modal-value">${sub.notes || 'None'}</div>
+    </div>
+  `;
+
+  document.getElementById('detailModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('detailModal').classList.remove('show');
+}
+
+function startWork(id) {
+  const sub = submissions.find(s => s.id === id);
+  if (!sub) return;
+  sub.status = 'progress';
+  renderSubmissions();
+  alert(`✓ Status updated: ${sub.company} marked as "In Progress"`);
+}
+
+function markComplete(id) {
+  const sub = submissions.find(s => s.id === id);
+  if (!sub) return;
+  sub.status = 'complete';
+  renderSubmissions();
+  alert(`✓ Status updated: ${sub.company} marked as "Complete"`);
+}
+
+function generateReport(id) {
+  const sub = submissions.find(s => s.id === id);
+  if (!sub) return;
+  alert(`📄 Report Generation\n\nFor ${sub.company}:\n\n1. Open aegiscore_report.py\n2. Edit REPORT_DATA with client info\n3. Run: python aegiscore_report.py\n4. Send PDF to: ${sub.email}`);
+}
+
+// Close modal on outside click
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+</script>
+
+</body>
+</html>
