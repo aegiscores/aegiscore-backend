@@ -16,6 +16,11 @@ const headers = {
 };
 
 module.exports = async (req, res) => {
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+
   // Handle preflight
   if (req.method === 'OPTIONS') {
     return res.status(200).json({ ok: true });
@@ -39,7 +44,7 @@ module.exports = async (req, res) => {
 
     // Validate required fields
     if (!name || !email || !company || !domain || !service) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         error: 'Missing required fields',
         required: ['name', 'email', 'company', 'domain', 'service']
       });
