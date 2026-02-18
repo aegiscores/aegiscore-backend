@@ -127,3 +127,4 @@ After deployment:
 ## Support
 
 Questions? Email: hello@aegiscore.in
+redeploy
