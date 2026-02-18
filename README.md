@@ -129,3 +129,4 @@ After deployment:
 Questions? Email: hello@aegiscore.in
 redeploy
 redeploy trigger
+redeploy trigger
